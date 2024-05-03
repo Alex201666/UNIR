@@ -37,7 +37,7 @@ pipeline {
                             sh '''
                             export FLASK_API=app/api.py
                             flask run --port=5001 &
-                            java -jar /home/alex/Escritorio/UNIR/helloworld/test/wiremock/wiremock-standalone-3.5.4.jar --port=9090 --root-dir test/wiremock
+                            java -jar /home/alex/Escritorio/UNIR/test/wiremock/wiremock-standalone-3.5.4.jar --port=9090 --root-dir test/wiremock
                             export PYTHONPATH=.
                             pytest --junitxml=result-rest.xml test/rest
                             '''

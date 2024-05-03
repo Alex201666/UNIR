@@ -51,8 +51,9 @@ class TestApi(unittest.TestCase):
         self.assertEqual(
             response.status, http.client.OK, f"Error en la petición API a {url}"
         )
+        # Se utiliza la función float() para permitir resultados con decimales
         self.assertEqual(
-            response.read().decode(), "5", "ERROR DIVIDE"
+            float(response.read().decode()), 5, "ERROR DIVIDE"
         )
 
 

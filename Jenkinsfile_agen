@@ -1,0 +1,80 @@
+pipeline {
+    agent none // No se asigna un agente por defecto
+
+    stages {
+        stage('Get Code') {
+            agent any // El agente puede ser cualquier nodo disponible
+            steps {
+                //Obtener el código del repositorio
+                git 'https://github.com/Alex201666/UNIR.git'
+                sh '''
+                    whoami
+                    hostname
+                '''
+            }
+        }
+        
+        stage('Build') {
+            agent any // El agente puede ser cualquier nodo disponible
+            steps {
+                sh '''
+                    whoami
+                    hostname
+                '''
+                echo 'Ey, esto es python y no hay que compilar nada'
+                echo env.WORKSPACE // Acceder a la variable de entorno del espacio de trabajo
+                sh 'ls -l'
+                stash includes: '*', name: 'archivo'
+            }
+        }
+        
+        stage('Test') {
+            parallel {
+                stage('Unit') {
+                    agent { label 'principal' } // Agente principal para la rama 'Unit'
+                    steps {
+                        unstash 'archivo'
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE'){
+                            sh '''
+                                whoami
+                                hostname
+                                export PYTHONPATH=.
+                                pytest --junitxml=result-unit.xml test/unit
+                            '''
+                        }
+                    }
+                }
+                
+                stage('Rest') {
+                    agent { label 'principal' } // Agente principal para la rama 'Rest'
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE'){
+                            sh '''
+                                whoami
+                                hostname
+                                export FLASK_API=app/api.py
+                                flask run --port=5001 &
+                                java -jar /home/alex/Escritorio/UNIR/test/wiremock/wiremock-standalone-3.5.4.jar --port=9090 --root-dir test/wiremock
+                                export PYTHONPATH=.
+                                pytest --junitxml=result-rest.xml test/rest
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Results') {
+            agent any // El agente puede ser cualquier nodo disponible
+            steps {
+                sh '''
+                    whoami
+                    hostname
+                '''
+                junit 'result*.xml'
+                echo 'FINALIZADO' 
+            }
+        }
+    }
+}
+
